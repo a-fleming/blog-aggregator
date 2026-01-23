@@ -38,7 +38,16 @@ func handlerLogin(s *state, cmd command) error {
 		return fmt.Errorf("gator login: error: the following arguments are required: username")
 	}
 	userName := cmd.arguments[0]
-	err := s.config.SetUser(userName)
+
+	ctx := context.Background()
+	user, err := s.db.GetUser(ctx, userName)
+	if user == (database.User{}) {
+		return fmt.Errorf("username '%s' does not exist in database", userName)
+	}
+	if err != nil {
+		return err
+	}
+	err = s.config.SetUser(userName)
 	if err != nil {
 		return err
 	}

@@ -31,6 +31,7 @@ func GetCommands() commands {
 	cmds.register("agg", handlerAggregate)
 	cmds.register("feeds", handlerFeeds)
 	cmds.register("follow", handlerFollow)
+	cmds.register("following", handlerFollowing)
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
 	cmds.register("reset", handlerReset)
@@ -121,6 +122,28 @@ func handlerFollow(s *state, cmd command) error {
 		return err
 	}
 	fmt.Printf("'%s' has followed '%s'\n", followedFeed.UserName, followedFeed.FeedName)
+	return nil
+}
+
+func handlerFollowing(s *state, cmd command) error {
+	ctx := context.Background()
+	uid, err := uuid.Parse(s.config.CurrentUserID)
+	if err != nil {
+		return err
+	}
+	feedFollows, err := s.db.GetFeedFollowsForUser(ctx, uid)
+	if err != nil {
+		return err
+	}
+	if len(feedFollows) == 0 {
+		fmt.Printf("'%s' is not following any feeds\n", s.config.CurrentUserName)
+		return nil
+	}
+
+	fmt.Printf("'%s' is following:\n", s.config.CurrentUserName)
+	for _, feedFollow := range feedFollows {
+		fmt.Printf("* '%s'\n", feedFollow.FeedName)
+	}
 	return nil
 }
 

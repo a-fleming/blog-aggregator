@@ -47,14 +47,14 @@ func handlerAddFeed(s *state, cmd command) error {
 	feedURL := cmd.arguments[1]
 
 	uid, err := uuid.Parse(s.config.CurrentUserID)
-	params := database.CreateFeedParams{
+	createFeedParams := database.CreateFeedParams{
 		Name:   feedName,
 		Url:    feedURL,
 		UserID: uid,
 	}
 
 	ctx := context.Background()
-	feedInfo, err := s.db.CreateFeed(ctx, params)
+	feedInfo, err := s.db.CreateFeed(ctx, createFeedParams)
 	if err != nil {
 		return err
 	}
@@ -65,6 +65,16 @@ func handlerAddFeed(s *state, cmd command) error {
 	fmt.Printf("createAt: %+v\n", feedInfo.CreatedAt)
 	fmt.Printf("updatedAt: %+v\n", feedInfo.UpdatedAt)
 	fmt.Printf("user_id: %+v\n", feedInfo.ID)
+
+	createFeedFollowParams := database.CreateFeedFollowParams{
+		UserID: uid,
+		FeedID: feedInfo.ID,
+	}
+	followedFeed, err := s.db.CreateFeedFollow(ctx, createFeedFollowParams)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("'%s' has followed '%s'\n", followedFeed.UserName, followedFeed.FeedName)
 	return nil
 }
 

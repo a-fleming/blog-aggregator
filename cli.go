@@ -162,7 +162,7 @@ func handlerFollowing(s *state, cmd command, user database.User) error {
 
 	fmt.Printf("'%s' is following:\n", s.config.CurrentUserName)
 	for _, feedFollow := range feedFollows {
-		fmt.Printf("* '%s'\n", feedFollow.FeedName)
+		fmt.Printf("* '%s' (%s)\n", feedFollow.FeedName, feedFollow.FeedUrl)
 	}
 	return nil
 }

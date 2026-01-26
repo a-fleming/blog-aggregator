@@ -20,7 +20,8 @@ JOIN feeds f ON f.id = i.feed_id;
 -- name: GetFeedFollowsForUser :many
 SELECT
     users.name as user_name,
-    feeds.name as feed_name
+    feeds.name as feed_name,
+    feeds.url as feed_url
 FROM feed_follows
 JOIN users ON feed_follows.user_id = users.id
 JOIN feeds ON feed_follows.feed_id = feeds.id

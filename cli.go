@@ -36,6 +36,7 @@ func GetCommands() commands {
 	cmds.register("logout", handlerLogout)
 	cmds.register("register", handlerRegister)
 	cmds.register("reset", handlerReset)
+	cmds.register("unfollow", middlewareLoggedIn(handlerUnfollow))
 	cmds.register("users", handlerUsers)
 	return cmds
 }
@@ -225,12 +226,33 @@ func handlerReset(s *state, cmd command) error {
 	if err != nil {
 		return err
 	}
-	// err = config.ResetConfig()
 	err = handlerLogout(s, cmd)
 	if err != nil {
 		return err
 	}
 	fmt.Println("Successfully reset 'users' table")
+	return nil
+}
+
+func handlerUnfollow(s *state, cmd command, user database.User) error {
+	if len(cmd.arguments) == 0 {
+		return fmt.Errorf("gator follow:un error: the following arguments are required: url")
+	}
+	feedURL := cmd.arguments[0]
+	ctx := context.Background()
+	feed, err := s.db.GetFeedByUrl(ctx, feedURL)
+	if err != nil {
+		return err
+	}
+	params := database.RemoveFeedFollowParams{
+		UserID: user.ID,
+		FeedID: feed.ID,
+	}
+	err = s.db.RemoveFeedFollow(ctx, params)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("successfully unfollowed feed '%s'\n", feed.Name)
 	return nil
 }
 

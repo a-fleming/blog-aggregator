@@ -257,7 +257,7 @@ func (c *commands) register(name string, f func(*state, command) error) {
 func (c *commands) run(s *state, cmd command) error {
 	cmdFunc, exists := c.cliCommands[cmd.name]
 	if !exists {
-		return fmt.Errorf("Unknown command '%s'\n", cmd.name)
+		return fmt.Errorf("Unknown command '%s'", cmd.name)
 	}
 	return cmdFunc(s, cmd)
 }

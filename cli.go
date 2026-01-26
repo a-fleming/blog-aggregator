@@ -72,7 +72,7 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Successfully added RSS feed")
+	fmt.Println("successfully added RSS feed")
 	fmt.Printf("id: %+v\n", feedInfo.ID)
 	fmt.Printf("name: %s\n", feedName)
 	fmt.Printf("url: %s\n", feedURL)
@@ -215,7 +215,7 @@ func handlerRegister(s *state, cmd command) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("User '%s' was created\n", userName)
+	fmt.Printf("user '%s' was created\n", userName)
 	fmt.Printf("%+v\n", user)
 	return nil
 }
@@ -230,7 +230,7 @@ func handlerReset(s *state, cmd command) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Successfully reset 'users' table")
+	fmt.Println("successfully reset 'users' table")
 	return nil
 }
 
@@ -279,7 +279,7 @@ func (c *commands) register(name string, f func(*state, command) error) {
 func (c *commands) run(s *state, cmd command) error {
 	cmdFunc, exists := c.cliCommands[cmd.name]
 	if !exists {
-		return fmt.Errorf("Unknown command '%s'", cmd.name)
+		return fmt.Errorf("unknown command '%s'", cmd.name)
 	}
 	return cmdFunc(s, cmd)
 }

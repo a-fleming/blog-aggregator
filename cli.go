@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	"www.github.com/a-fleming/blog-aggregator/internal/config"
 	"www.github.com/a-fleming/blog-aggregator/internal/database"
 )
@@ -27,11 +26,11 @@ func GetCommands() commands {
 	cmds := commands{
 		cliCommands: map[string]func(*state, command) error{},
 	}
-	cmds.register("addfeed", handlerAddFeed)
+	cmds.register("addfeed", middlewareLoggedIn(handlerAddFeed))
 	cmds.register("agg", handlerAggregate)
 	cmds.register("feeds", handlerFeeds)
-	cmds.register("follow", handlerFollow)
-	cmds.register("following", handlerFollowing)
+	cmds.register("follow", middlewareLoggedIn(handlerFollow))
+	cmds.register("following", middlewareLoggedIn(handlerFollowing))
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
 	cmds.register("reset", handlerReset)
@@ -39,18 +38,32 @@ func GetCommands() commands {
 	return cmds
 }
 
-func handlerAddFeed(s *state, cmd command) error {
+func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {
+	return func(s *state, cmd command) error {
+		if s.config.CurrentUserID == "" {
+			return fmt.Errorf("you must be logged in to run '%s'", cmd.name)
+		}
+		fmt.Printf("state: %+v\n", s)
+		fmt.Printf("state.cfg: %+v\n", s.config)
+		user, err := s.db.GetUser(context.Background(), s.config.CurrentUserName)
+		if err != nil {
+			return err
+		}
+		return handler(s, cmd, user)
+	}
+}
+
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) < 2 {
 		return fmt.Errorf("gator addfeed: error: the following arguments are required: name url")
 	}
 	feedName := cmd.arguments[0]
 	feedURL := cmd.arguments[1]
 
-	uid, err := uuid.Parse(s.config.CurrentUserID)
 	createFeedParams := database.CreateFeedParams{
 		Name:   feedName,
 		Url:    feedURL,
-		UserID: uid,
+		UserID: user.ID,
 	}
 
 	ctx := context.Background()
@@ -67,7 +80,7 @@ func handlerAddFeed(s *state, cmd command) error {
 	fmt.Printf("user_id: %+v\n", feedInfo.ID)
 
 	createFeedFollowParams := database.CreateFeedFollowParams{
-		UserID: uid,
+		UserID: user.ID,
 		FeedID: feedInfo.ID,
 	}
 	followedFeed, err := s.db.CreateFeedFollow(ctx, createFeedFollowParams)
@@ -107,7 +120,7 @@ func handlerFeeds(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) == 0 {
 		return fmt.Errorf("gator follow: error: the following arguments are required: url")
 	}
@@ -119,12 +132,8 @@ func handlerFollow(s *state, cmd command) error {
 		return err
 	}
 
-	uid, err := uuid.Parse(s.config.CurrentUserID)
-	if err != nil {
-		return err
-	}
 	params := database.CreateFeedFollowParams{
-		UserID: uid,
+		UserID: user.ID,
 		FeedID: feedInfo.ID,
 	}
 	followedFeed, err := s.db.CreateFeedFollow(ctx, params)
@@ -135,13 +144,10 @@ func handlerFollow(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollowing(s *state, cmd command) error {
+func handlerFollowing(s *state, cmd command, user database.User) error {
 	ctx := context.Background()
-	uid, err := uuid.Parse(s.config.CurrentUserID)
-	if err != nil {
-		return err
-	}
-	feedFollows, err := s.db.GetFeedFollowsForUser(ctx, uid)
+
+	feedFollows, err := s.db.GetFeedFollowsForUser(ctx, user.ID)
 	if err != nil {
 		return err
 	}
@@ -179,6 +185,16 @@ func handlerLogin(s *state, cmd command) error {
 	return nil
 }
 
+func handlerLogout(s *state, cmd command) error {
+	loggedOutUserName := s.config.CurrentUserName
+	err := s.config.SetUser("", "")
+	if err != nil {
+		return err
+	}
+	fmt.Printf("'%s' was logged out\n", loggedOutUserName)
+	return nil
+}
+
 func handlerRegister(s *state, cmd command) error {
 	if len(cmd.arguments) == 0 {
 		return fmt.Errorf("gator register: error: the following arguments are required: username")
@@ -203,6 +219,11 @@ func handlerRegister(s *state, cmd command) error {
 func handlerReset(s *state, cmd command) error {
 	ctx := context.Background()
 	err := s.db.Reset(ctx)
+	if err != nil {
+		return err
+	}
+	// err = config.ResetConfig()
+	err = handlerLogout(s, cmd)
 	if err != nil {
 		return err
 	}

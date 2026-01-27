@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,6 +31,7 @@ func GetCommands() commands {
 	}
 	cmds.register("addfeed", middlewareLoggedIn(handlerAddFeed))
 	cmds.register("agg", handlerAggregate)
+	cmds.register("browse", middlewareLoggedIn(handlerBrowse))
 	cmds.register("feeds", handlerFeeds)
 	cmds.register("follow", middlewareLoggedIn(handlerFollow))
 	cmds.register("following", middlewareLoggedIn(handlerFollowing))
@@ -117,6 +119,39 @@ func handlerAggregate(s *state, cmd command) error {
 		fmt.Println()
 		fmt.Println()
 	}
+}
+
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	limit := int32(2)
+	if len(cmd.arguments) > 0 {
+		parsedLimit, err := strconv.ParseInt(cmd.arguments[0], 10, 32)
+		if err != nil {
+			return err
+		}
+		limit = int32(parsedLimit)
+	}
+	params := database.GetPostsForUserParams{
+		ID:    user.ID,
+		Limit: limit,
+	}
+	ctx := context.Background()
+	posts, err := s.db.GetPostsForUser(ctx, params)
+	if err != nil {
+		return err
+	}
+	for idx, post := range posts {
+		descriptionStr := ""
+		if post.Description.Valid {
+			descriptionStr = post.Description.String
+		}
+
+		fmt.Printf("%d. Title: %s\n", idx+1, post.Title)
+		fmt.Printf("-- Link: %s\n", post.Url)
+		fmt.Printf("-- Date: %s\n", post.PublishedAt)
+		fmt.Printf("-- Description: %s\n", descriptionStr)
+		fmt.Println()
+	}
+	return nil
 }
 
 func handlerFeeds(s *state, cmd command) error {

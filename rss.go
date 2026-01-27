@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/a-fleming/blog-aggregator/internal/database"
 	"github.com/google/uuid"
-	"www.github.com/a-fleming/blog-aggregator/internal/database"
 )
 
 type RSSFeed struct {

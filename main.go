@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/a-fleming/blog-aggregator/internal/config"
+	"github.com/a-fleming/blog-aggregator/internal/database"
 	_ "github.com/lib/pq"
-	"www.github.com/a-fleming/blog-aggregator/internal/config"
-	"www.github.com/a-fleming/blog-aggregator/internal/database"
 )
 
 func main() {

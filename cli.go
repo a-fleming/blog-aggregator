@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"www.github.com/a-fleming/blog-aggregator/internal/config"
-	"www.github.com/a-fleming/blog-aggregator/internal/database"
+	"github.com/a-fleming/blog-aggregator/internal/config"
+	"github.com/a-fleming/blog-aggregator/internal/database"
 )
 
 type state struct {

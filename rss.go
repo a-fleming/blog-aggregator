@@ -2,12 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"fmt"
 	"html"
 	"io"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"www.github.com/a-fleming/blog-aggregator/internal/database"
 )
 
 type RSSFeed struct {
@@ -72,12 +77,19 @@ func printFeed(feed RSSFeed) {
 	fmt.Printf("Link: %s\n", feed.Channel.Link)
 	fmt.Printf("Description: %s\n", feed.Channel.Description)
 	for _, item := range feed.Channel.Item {
+		if len(item.Title) == 0 {
+			continue
+		}
+
 		fmt.Printf(" * Title: %s\n", item.Title)
+		fmt.Printf(" * URL:%s\n", item.Link)
+		fmt.Printf(" * PubDate:%s\n", item.PubDate)
+		fmt.Printf(" * Description:%s\n", item.Description)
+		fmt.Println()
 	}
 }
 
-func scrapeFeeds(s *state, timeoutSec int) error {
-	ctx := context.Background()
+func scrapeFeeds(ctx context.Context, s *state, timeoutSec int) error {
 	feedDbInfo, err := s.db.GetNextFeedToFetch(ctx)
 	if err != nil {
 		return err
@@ -90,6 +102,66 @@ func scrapeFeeds(s *state, timeoutSec int) error {
 	if err != nil {
 		return err
 	}
+	unescapeAndTrimFeed(*rssFeed)
 	printFeed(*rssFeed)
+	err = addPosts(ctx, s, *rssFeed, feedDbInfo.ID)
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func addPosts(ctx context.Context, s *state, feed RSSFeed, feedID uuid.UUID) error {
+	for _, post := range feed.Channel.Item {
+		if len(post.Title) == 0 {
+			continue
+		}
+
+		pubTime, err := time.Parse(time.RFC1123Z, post.PubDate)
+		if err != nil {
+			return err
+		}
+
+		var description sql.NullString
+		if len(post.Description) != 0 {
+			description = sql.NullString{
+				String: post.Description,
+				Valid:  true,
+			}
+		} else {
+			description = sql.NullString{
+				Valid: false,
+			}
+		}
+		createPostParams := database.CreatePostParams{
+			Title:       post.Title,
+			Url:         post.Link,
+			Description: description,
+			PublishedAt: pubTime,
+			FeedID:      feedID,
+		}
+		postResults, err := s.db.CreatePost(ctx, createPostParams)
+		if err != nil {
+			if err.Error() == "pq: duplicate key value violates unique constraint \"posts_url_key\"" {
+				fmt.Printf("skipping duplicate post\n")
+				continue
+			} else {
+				return err
+			}
+		}
+		fmt.Printf("postResults: %+v\n\n", postResults)
+	}
+	return nil
+}
+
+func unescapeAndTrimFeed(feed RSSFeed) {
+	feed.Channel.Title = strings.TrimSpace(html.UnescapeString(feed.Channel.Title))
+	feed.Channel.Link = strings.TrimSpace(html.UnescapeString(feed.Channel.Link))
+	feed.Channel.Description = strings.TrimSpace(html.UnescapeString(feed.Channel.Description))
+	for _, post := range feed.Channel.Item {
+		post.Title = strings.TrimSpace(html.UnescapeString(post.Title))
+		post.Link = strings.TrimSpace(html.UnescapeString(post.Link))
+		post.PubDate = strings.TrimSpace(html.UnescapeString(post.PubDate))
+		post.Description = strings.TrimSpace(html.UnescapeString(post.Description))
+	}
 }

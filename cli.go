@@ -102,11 +102,12 @@ func handlerAggregate(s *state, cmd command) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Collecting feeds every %s\n", timeStr)
+	fmt.Printf("collecting feeds every %s\n", timeStr)
 	ticker := time.NewTicker(timeBetweenRequests)
+	ctx := context.Background()
 	for ; ; <-ticker.C {
 		httpTimeoutSec := 15
-		err = scrapeFeeds(s, httpTimeoutSec)
+		err = scrapeFeeds(ctx, s, httpTimeoutSec)
 		if err != nil {
 			return err
 		}

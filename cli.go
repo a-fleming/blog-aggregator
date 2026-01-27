@@ -138,7 +138,7 @@ func handlerFeeds(s *state, cmd command) error {
 
 func handlerFollow(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) == 0 {
-		return fmt.Errorf("gator follow: error: the following arguments are required: url")
+		return fmt.Errorf("gator follow: error: the following argument is required: url")
 	}
 	feedURL := cmd.arguments[0]
 
@@ -184,7 +184,7 @@ func handlerFollowing(s *state, cmd command, user database.User) error {
 
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.arguments) == 0 {
-		return fmt.Errorf("gator login: error: the following arguments are required: username")
+		return fmt.Errorf("gator login: error: the following argument is required: username")
 	}
 	userName := cmd.arguments[0]
 
@@ -216,7 +216,7 @@ func handlerLogout(s *state, cmd command) error {
 
 func handlerRegister(s *state, cmd command) error {
 	if len(cmd.arguments) == 0 {
-		return fmt.Errorf("gator register: error: the following arguments are required: username")
+		return fmt.Errorf("gator register: error: the following argument is required: username")
 	}
 	userName := cmd.arguments[0]
 
@@ -251,7 +251,7 @@ func handlerReset(s *state, cmd command) error {
 
 func handlerUnfollow(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) == 0 {
-		return fmt.Errorf("gator follow:un error: the following arguments are required: url")
+		return fmt.Errorf("gator follow:un error: the following argument is required: url")
 	}
 	feedURL := cmd.arguments[0]
 	ctx := context.Background()

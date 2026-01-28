@@ -41,10 +41,10 @@ func Read() (Config, error) {
 	return cfg, nil
 }
 
-func (c Config) SetUser(userName string, userID string) error {
+func (c *Config) SetUser(userName string, userID string) error {
 	c.CurrentUserName = userName
 	c.CurrentUserID = userID
-	err := write(c)
+	err := write(*c)
 	return err
 }
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 type Config struct {
@@ -14,31 +15,30 @@ type Config struct {
 
 const configFileName string = ".gatorconfig.json"
 
-func getConfigFilePath() (string, error) {
+func configFilePath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("config: get user home dir: %w", err)
 	}
-	configPath := fmt.Sprintf("%s/%s", homeDir, configFileName)
-	return configPath, nil
+	return filepath.Join(homeDir, configFileName), nil
 }
 
 func Read() (Config, error) {
-	configFilePath, err := getConfigFilePath()
+	configFilePath, err := configFilePath()
 	if err != nil {
 		return Config{}, err
 	}
 	data, err := os.ReadFile(configFilePath)
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("config: read file %s: %w", configFilePath, err)
 	}
 
-	var jsonData Config
-	err = json.Unmarshal(data, &jsonData)
+	var cfg Config
+	err = json.Unmarshal(data, &cfg)
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("config: unmarshal json: %w", err)
 	}
-	return jsonData, nil
+	return cfg, nil
 }
 
 func (c Config) SetUser(userName string, userID string) error {
@@ -53,7 +53,7 @@ func write(cfg Config) error {
 	if err != nil {
 		return err
 	}
-	configPath, err := getConfigFilePath()
+	configPath, err := configFilePath()
 	if err != nil {
 		return err
 	}

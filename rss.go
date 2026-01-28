@@ -58,17 +58,7 @@ func fetchFeed(ctx context.Context, feedURL string, timeoutSec int) (*RSSFeed, e
 	if err != nil {
 		return &RSSFeed{}, err
 	}
-
-	feedData.Channel.Title = html.UnescapeString(feedData.Channel.Title)
-	feedData.Channel.Link = html.UnescapeString(feedData.Channel.Link)
-	feedData.Channel.Description = html.UnescapeString(feedData.Channel.Description)
-	for _, item := range feedData.Channel.Item {
-		item.Title = html.UnescapeString(item.Title)
-		item.Link = html.UnescapeString(item.Link)
-		item.Description = html.UnescapeString(item.Description)
-		item.PubDate = html.UnescapeString(item.PubDate)
-	}
-
+	unescapeAndTrimFeed(&feedData)
 	return &feedData, nil
 }
 
@@ -102,7 +92,6 @@ func scrapeFeeds(ctx context.Context, s *state, timeoutSec int) error {
 	if err != nil {
 		return err
 	}
-	unescapeAndTrimFeed(*rssFeed)
 	printFeed(*rssFeed)
 	err = addPosts(ctx, s, *rssFeed, feedDbInfo.ID)
 	if err != nil {
@@ -154,11 +143,12 @@ func addPosts(ctx context.Context, s *state, feed RSSFeed, feedID uuid.UUID) err
 	return nil
 }
 
-func unescapeAndTrimFeed(feed RSSFeed) {
+func unescapeAndTrimFeed(feed *RSSFeed) {
 	feed.Channel.Title = strings.TrimSpace(html.UnescapeString(feed.Channel.Title))
 	feed.Channel.Link = strings.TrimSpace(html.UnescapeString(feed.Channel.Link))
 	feed.Channel.Description = strings.TrimSpace(html.UnescapeString(feed.Channel.Description))
-	for _, post := range feed.Channel.Item {
+	for idx := range feed.Channel.Item {
+		post := &feed.Channel.Item[idx]
 		post.Title = strings.TrimSpace(html.UnescapeString(post.Title))
 		post.Link = strings.TrimSpace(html.UnescapeString(post.Link))
 		post.PubDate = strings.TrimSpace(html.UnescapeString(post.PubDate))

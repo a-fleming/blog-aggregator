@@ -31,6 +31,11 @@ func main() {
 		fmt.Printf("Error: %s\n", err)
 		os.Exit(1)
 	}
+	err = db.Ping()
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		os.Exit(1)
+	}
 
 	dbQueries := database.New(db)
 

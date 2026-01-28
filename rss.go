@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/a-fleming/blog-aggregator/internal/database"
+	"github.com/a-fleming/gator/internal/database"
 	"github.com/google/uuid"
 )
 

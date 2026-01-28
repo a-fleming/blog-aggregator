@@ -1,4 +1,4 @@
-module github.com/a-fleming/blog-aggregator
+module github.com/a-fleming/gator
 
 go 1.25.4
 

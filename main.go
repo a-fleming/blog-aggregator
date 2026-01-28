@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/a-fleming/blog-aggregator/internal/config"
-	"github.com/a-fleming/blog-aggregator/internal/database"
+	"github.com/a-fleming/gator/internal/config"
+	"github.com/a-fleming/gator/internal/database"
 	_ "github.com/lib/pq"
 )
 
